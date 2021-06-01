@@ -5,4 +5,5 @@ target
 log
 *.patch
 
-
+## draft code
+src/main/java/ru/javawebinar/topjava/util/HiddenUserMealsUtil.java

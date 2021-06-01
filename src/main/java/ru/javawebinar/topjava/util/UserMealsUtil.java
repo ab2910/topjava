@@ -3,11 +3,20 @@ package ru.javawebinar.topjava.util;
 import ru.javawebinar.topjava.model.UserMeal;
 import ru.javawebinar.topjava.model.UserMealWithExcess;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
+
+import static ru.javawebinar.topjava.util.TimeUtil.isBetweenHalfOpen;
 
 public class UserMealsUtil {
     public static void main(String[] args) {
@@ -21,19 +30,96 @@ public class UserMealsUtil {
                 new UserMeal(LocalDateTime.of(2020, Month.JANUARY, 31, 20, 0), "Ужин", 410)
         );
 
-        List<UserMealWithExcess> mealsTo = filteredByCycles(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
+        List<UserMealWithExcess> mealsTo = filteredByCycle(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
+        System.out.println("------> Filtering by cycles:");
         mealsTo.forEach(System.out::println);
 
-//        System.out.println(filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
+        mealsTo = filteredByStream(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
+        System.out.println("\n------> Filtering by streams:");
+        mealsTo.forEach(System.out::println);
     }
 
-    public static List<UserMealWithExcess> filteredByCycles(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        // TODO return filtered list with excess. Implement by cycles
-        return null;
+    public static List<UserMealWithExcess> filteredByCycle(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
+        if (meals == null || meals.size() == 0) return new ArrayList<>();
+
+        Map<LocalDate, UserMealWithExcess.Excess> dailyCalorage = new HashMap<>();
+        List<UserMealWithExcess> result = new ArrayList<>();
+
+        for (UserMeal meal : meals) {
+            if (meal != null && meal.getDateTime() != null) {
+                UserMealWithExcess.Excess excess = dailyCalorage.merge(
+                        meal.getDate(),
+                        new UserMealWithExcess.Excess(caloriesPerDay, meal.getCalories()),
+                        (exc1, exc2) -> exc1.addCalories(meal.getCalories())
+                );
+
+                if (isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
+                    result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), excess));
+                }
+            }
+        }
+
+        return result;
     }
 
-    public static List<UserMealWithExcess> filteredByStreams(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        // TODO Implement by streams
-        return null;
+    public static List<UserMealWithExcess> filteredByStream(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
+        return getNullCheckedStream(meals).collect(new CustomCollector(startTime, endTime, caloriesPerDay));
+    }
+
+    public static<E> Stream<E> getNullCheckedStream(Collection<E> collection) {
+        return Optional.ofNullable(collection)
+                .map(Collection::stream).orElseGet(Stream::empty)
+                .filter(Objects::nonNull);
+    }
+
+    public static class CustomCollector implements Collector<UserMeal, List<UserMealWithExcess>, List<UserMealWithExcess>> {
+        private final Map<LocalDate, UserMealWithExcess.Excess> dailyCalorage = new ConcurrentHashMap<>();
+        private LocalTime startTime;
+        private LocalTime endTime;
+        int caloriesPerDay;
+
+        public CustomCollector(LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
+            this.startTime = startTime;
+            this.endTime = endTime;
+            this.caloriesPerDay = caloriesPerDay;
+        }
+
+        @Override
+        public Supplier<List<UserMealWithExcess>> supplier() {
+            return ArrayList::new;
+        }
+
+        @Override
+        public BiConsumer<List<UserMealWithExcess>, UserMeal> accumulator() {
+            return (c, e) -> {
+                UserMealWithExcess.Excess excess = dailyCalorage.merge(
+                        e.getDate(),
+                        new UserMealWithExcess.Excess(caloriesPerDay, e.getCalories()),
+                        (exc1, exc2) -> exc1.addCalories(e.getCalories())
+                );
+
+                if (isBetweenHalfOpen(e.getTime(), startTime, endTime)) {
+                    c.add(new UserMealWithExcess(e.getDateTime(), e.getDescription(), e.getCalories(), excess));
+                }
+            };
+        }
+
+        @Override
+        public BinaryOperator<List<UserMealWithExcess>> combiner() {
+            return (l, r) -> {
+                l.addAll(r);
+                return l;
+            };
+        }
+
+        @Override
+        public Function<List<UserMealWithExcess>, List<UserMealWithExcess>> finisher() {
+            return c -> c;
+        }
+
+        @Override
+        public Set<Characteristics> characteristics() {
+            return EnumSet.of(Characteristics.CONCURRENT);
+        }
     }
 }
