@@ -48,12 +48,10 @@ public class UserMealsUtil {
                     new UserMealWithExcess.Excess(caloriesPerDay, meal.getCalories()),
                     (exc1, exc2) -> exc1.addCalories(meal.getCalories())
             );
-
             if (isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
                 result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), excess));
             }
         }
-
         return result;
     }
 
@@ -65,7 +63,7 @@ public class UserMealsUtil {
         private final Map<LocalDate, UserMealWithExcess.Excess> dailyCalorage = new ConcurrentHashMap<>();
         private final LocalTime startTime;
         private final LocalTime endTime;
-        int caloriesPerDay;
+        private final int caloriesPerDay;
 
         public CustomCollector(LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
             this.startTime = startTime;
