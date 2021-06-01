@@ -9,7 +9,6 @@ import java.time.LocalTime;
 import java.time.Month;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static ru.javawebinar.topjava.util.TimeUtil.isBetweenHalfOpen;
 
@@ -35,25 +34,16 @@ public class UserMealsUtil {
     }
 
     public static List<UserMealWithExcess> filteredByCycles(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        if (meals == null || meals.size() == 0) return new ArrayList<>();
-
-        /* local collection storing daily calorage for all the dates */
         Map<LocalDate, Integer> dailyCalorage = new HashMap<>();
 
-        /* first run through 'meals': count daily calorage */
         for (UserMeal meal : meals) {
-            if (meal != null && meal.getDateTime() != null) {
                 dailyCalorage.merge(meal.getDate(), meal.getCalories(), Integer::sum);
-            }
         }
 
         List<UserMealWithExcess> result = new ArrayList<>();
 
-        /* second run through 'meals': search for meals lying within arg time limits and saving them to result list
-         excess field is calculated by comparing of daily calorage got by date from map with arg limit of calories per day */
         for (UserMeal meal : meals) {
-            if (meal != null && meal.getDateTime() != null
-                    && isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
+            if (isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
                 result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
                         dailyCalorage.getOrDefault(meal.getDate(), 0) > caloriesPerDay));
             }
@@ -63,19 +53,13 @@ public class UserMealsUtil {
     }
 
     public static List<UserMealWithExcess> filteredByStreams(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        Map<LocalDate, Integer> dailyCalorage = getNullCheckedStream(meals)
+        Map<LocalDate, Integer> dailyCalorage = meals.stream()
                 .collect(Collectors.toMap(UserMeal::getDate, UserMeal::getCalories, Integer::sum));
 
-        return getNullCheckedStream(meals)
+        return meals.stream()
                 .filter(meal -> isBetweenHalfOpen(meal.getTime(), startTime, endTime))
                 .map(meal -> new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
                         dailyCalorage.getOrDefault(meal.getDate(), 0) > caloriesPerDay))
                 .collect(Collectors.toList());
-    }
-
-    public static<E> Stream<E> getNullCheckedStream(Collection<E> collection) {
-        return Optional.ofNullable(collection)
-                .map(Collection::stream).orElseGet(Stream::empty)
-                .filter(Objects::nonNull);
     }
 }
