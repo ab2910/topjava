@@ -14,7 +14,6 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import java.util.stream.Stream;
 
 import static ru.javawebinar.topjava.util.TimeUtil.isBetweenHalfOpen;
 
@@ -40,22 +39,18 @@ public class UserMealsUtil {
     }
 
     public static List<UserMealWithExcess> filteredByCycle(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        if (meals == null || meals.size() == 0) return new ArrayList<>();
-
         Map<LocalDate, UserMealWithExcess.Excess> dailyCalorage = new HashMap<>();
         List<UserMealWithExcess> result = new ArrayList<>();
 
         for (UserMeal meal : meals) {
-            if (meal != null && meal.getDateTime() != null) {
-                UserMealWithExcess.Excess excess = dailyCalorage.merge(
-                        meal.getDate(),
-                        new UserMealWithExcess.Excess(caloriesPerDay, meal.getCalories()),
-                        (exc1, exc2) -> exc1.addCalories(meal.getCalories())
-                );
+            UserMealWithExcess.Excess excess = dailyCalorage.merge(
+                    meal.getDate(),
+                    new UserMealWithExcess.Excess(caloriesPerDay, meal.getCalories()),
+                    (exc1, exc2) -> exc1.addCalories(meal.getCalories())
+            );
 
-                if (isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
-                    result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), excess));
-                }
+            if (isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
+                result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), excess));
             }
         }
 
@@ -63,19 +58,13 @@ public class UserMealsUtil {
     }
 
     public static List<UserMealWithExcess> filteredByStream(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        return getNullCheckedStream(meals).collect(new CustomCollector(startTime, endTime, caloriesPerDay));
-    }
-
-    public static<E> Stream<E> getNullCheckedStream(Collection<E> collection) {
-        return Optional.ofNullable(collection)
-                .map(Collection::stream).orElseGet(Stream::empty)
-                .filter(Objects::nonNull);
+        return meals.stream().collect(new CustomCollector(startTime, endTime, caloriesPerDay));
     }
 
     public static class CustomCollector implements Collector<UserMeal, List<UserMealWithExcess>, List<UserMealWithExcess>> {
         private final Map<LocalDate, UserMealWithExcess.Excess> dailyCalorage = new ConcurrentHashMap<>();
-        private LocalTime startTime;
-        private LocalTime endTime;
+        private final LocalTime startTime;
+        private final LocalTime endTime;
         int caloriesPerDay;
 
         public CustomCollector(LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
