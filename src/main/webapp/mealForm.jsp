@@ -5,6 +5,23 @@
 <head>
     <title>Meal</title>
     <style>
+        html, body {
+            height: 100%;
+        }
+
+        html {
+            display: table;
+            margin: auto;
+        }
+
+        body {
+            display: table-cell;
+            vertical-align: top;
+            padding-top: 50px;
+            background-color: darkgray;
+            font-family: Monospaced, monospace;
+        }
+
         dl {
             background: none repeat scroll 0 0 #FAFAFA;
             margin: 8px 0;

@@ -12,7 +12,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
@@ -29,8 +31,24 @@ public class MealServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+
+        if (request.getParameter("action") != null) {
+            String startDate = request.getParameter("startDate");
+            String startTime = request.getParameter("startTime");
+            String endDate = request.getParameter("endDate");
+            String endTime = request.getParameter("endTime");
+            log.info("postFilter: startDate=[{}], startTime=[{}], endDate=[{}], endTime=[{}]", startDate, startTime, endDate, endTime);
+            request.setAttribute("meals", controller.getAll(
+                    startDate.isEmpty() ? null : LocalDate.parse(startDate),
+                    startTime.isEmpty() ? null : LocalTime.parse(startTime),
+                    endDate.isEmpty() ? null : LocalDate.parse(endDate),
+                    endTime.isEmpty() ? null : LocalTime.parse(endTime)
+            ));
+            request.getRequestDispatcher("/meals.jsp").forward(request, response);
+        }
+
         String id = request.getParameter("id");
 
         Meal meal = new Meal(id.isEmpty() ? null : Integer.valueOf(id),
