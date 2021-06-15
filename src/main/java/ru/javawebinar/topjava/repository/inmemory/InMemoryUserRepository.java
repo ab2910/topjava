@@ -22,6 +22,7 @@ public class InMemoryUserRepository implements UserRepository {
     {
         save(new User(null, "userName", "admin@mail.ru", "password", Role.ADMIN));
         save(new User(null, "user #2", "user@mail.ru", "password", Role.USER));
+        save(new User(null, "user #3", "user@mail.ru", "password", Role.USER));
     }
 
     @Override
@@ -63,6 +64,6 @@ public class InMemoryUserRepository implements UserRepository {
         return repository.values().stream()
                 .filter(user -> user.getEmail().equalsIgnoreCase(email))
                 .findFirst()
-                .orElseGet(null);
+                .orElse(null);
     }
 }

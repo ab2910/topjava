@@ -60,7 +60,6 @@ public class MealServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
-
         switch (action == null ? "all" : action) {
             case "delete":
                 int id = getId(request);
@@ -83,10 +82,10 @@ public class MealServlet extends HttpServlet {
                 String endTime = request.getParameter("endTime");
                 log.info("getAllFiltered: startDate=[{}], startTime=[{}], endDate=[{}], endTime=[{}]", startDate, startTime, endDate, endTime);
                 request.setAttribute("meals", controller.getAllFiltered(
-                        startDate.isEmpty() ? null : LocalDate.parse(startDate),
-                        startTime.isEmpty() ? null : LocalTime.parse(startTime),
-                        endDate.isEmpty() ? null : LocalDate.parse(endDate),
-                        endTime.isEmpty() ? null : LocalTime.parse(endTime)
+                        startDate == null || startDate.isEmpty() ? null : LocalDate.parse(startDate),
+                        startTime == null || startTime.isEmpty() ? null : LocalTime.parse(startTime),
+                        endDate == null || endDate.isEmpty() ? null : LocalDate.parse(endDate),
+                        endTime == null || endTime.isEmpty() ? null : LocalTime.parse(endTime)
                 ));
                 request.getRequestDispatcher("/meals.jsp").forward(request, response);
                 break;

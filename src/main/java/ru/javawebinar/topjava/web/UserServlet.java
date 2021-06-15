@@ -17,22 +17,18 @@ public class UserServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         request.setCharacterEncoding("UTF-8");
-
         String action = request.getParameter("action");
-
         if (action != null && action.equals("login")) {
             int userId = getId(request);
             log.info("change userId to={}", userId);
             SecurityUtil.setAuthUserId(userId);
         }
-
         response.sendRedirect("users");
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int userId = SecurityUtil.authUserId();
-
         log.info("forward to users with userId={}", userId);
         request.setAttribute("userId", userId);
         request.getRequestDispatcher("/users.jsp").forward(request, response);

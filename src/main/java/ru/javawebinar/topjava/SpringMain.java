@@ -3,13 +3,20 @@ package ru.javawebinar.topjava;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.javawebinar.topjava.model.Meal;
+import ru.javawebinar.topjava.model.Role;
+import ru.javawebinar.topjava.model.User;
+import ru.javawebinar.topjava.repository.UserRepository;
+import ru.javawebinar.topjava.repository.inmemory.InMemoryUserRepository;
+import ru.javawebinar.topjava.service.MealService;
 import ru.javawebinar.topjava.web.meal.MealRestController;
+import ru.javawebinar.topjava.web.user.AdminRestController;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.Arrays;
+import java.util.List;
 
 public class SpringMain {
     public static void main(String[] args) {
@@ -31,7 +38,7 @@ public class SpringMain {
             Meal meal = mealRestController.get(4);
             System.out.println("\t" + meal);
 
-            System.out.println("\nget all meals belonging to user 1:");
+            /*System.out.println("\nget all meals belonging to user 1:");
             System.out.println("\t" + mealRestController.getAll());
 
             System.out.println("\nupdate and get meal 4 belonging to user 1:");
@@ -69,20 +76,24 @@ public class SpringMain {
                     null,
                     LocalTime.of(12, 0)));
 
+            System.out.println("\nget all meals for user 3 with no meal");
+            MealService mealService = appCtx.getBean(MealService.class);
+            System.out.println("\t" + mealService.getAll(3));*/
+
             /*System.out.println("\ntry to update meal 8 not belonging to user 1:");
-            mealRestController.update(new Meal(8, meal.getDateTime(), "Апдейт еды другого пользователя", meal.getCalories()), 8);;
-            System.out.println("\t" + mealRestController.get(8));*/ // NPE
+            mealRestController.update(new Meal(8, meal.getDateTime(), "Апдейт еды другого пользователя", meal.getCalories()), 8); // NFE
+            System.out.println("\t" + mealRestController.get(8)); // NPE*/
 
             /*System.out.println("\ntry to update not-consistent meal 4 belonging to user 1:");
-            mealRestController.update(new Meal(5, meal.getDateTime(), "Апдейт еды другого пользователя", meal.getCalories()), 4);
-            System.out.println("\t" + mealRestController.get(8));*/ // IAE
+            mealRestController.update(new Meal(0, meal.getDateTime(), "Апдейт не той еды", meal.getCalories()), 4); // IAE
+            System.out.println("\t" + mealRestController.get(8)); // NFE*/
 
             /*System.out.println("\ntry to get meal 8 not belonging to user 1:");
             meal = mealRestController.get(8);
-            System.out.println("\t" + meal);*/ // NPE
+            System.out.println("\t" + meal); // NFE*/
 
             /*System.out.println("\ntry to delete meal 8 not belonging to user 1:");
-            mealRestController.delete(8);*/ // NPE
+            mealRestController.delete(8); // NFE*/
 
             /*List<User> users = Arrays.asList(
                     new User("user", "e@ma.il", "password", Role.USER),
@@ -104,7 +115,13 @@ public class SpringMain {
             adminUserController.create(new User(null, "userName", "email@mail.ru", "password", Role.ADMIN));
 
             System.out.println("\nget all users sorted by name, then email");
-            adminUserController.getAll().forEach(user -> System.out.println("\t"+user));*/
+            adminUserController.getAll().forEach(user -> System.out.println("\t"+user));
+
+            System.out.println("\nget user by existing email");
+            System.out.println(adminUserController.getByMail("admin@mail.ru"));
+
+            System.out.println("\nget user by non-existing email");
+            System.out.println(adminUserController.getByMail("god@mail.ru")); // NFE*/
         }
     }
 }

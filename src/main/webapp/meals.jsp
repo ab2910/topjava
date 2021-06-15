@@ -129,10 +129,10 @@
         <table>
             <tr>
                 <td><label for="startDate">date from:</label></td>
-                <td><input id="startDate" name="startDate" type="date"/></td>
+                <td><input id="startDate" name="startDate" value="${param.startDate}" type="date"/></td>
                 <td style="width: 29px"></td>
                 <td><label for="startTime">time from:</label></td>
-                <td><input id="startTime" name="startTime" type="time"/></td>
+                <td><input id="startTime" name="startTime" value="${param.startTime}" type="time"/></td>
                 <td style="width: 29px"></td>
                 <td>
                     <button type="submit">Apply</button>
@@ -140,10 +140,10 @@
             </tr>
             <tr>
                 <td><label for="endDate">date to:</label></td>
-                <td><input id="endDate" name="endDate" type="date"/></td>
+                <td><input id="endDate" name="endDate" value="${param.endDate}" type="date"/></td>
                 <td></td>
                 <td><label for="endTime">time to:</label></td>
-                <td><input id="endTime" name="endTime" type="time"/></td>
+                <td><input id="endTime" name="endTime" value="${param.endTime}" type="time"/></td>
                 <td></td>
                 <td>
                     <button type="reset">Reset</button>
