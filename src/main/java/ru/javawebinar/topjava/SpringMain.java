@@ -38,7 +38,7 @@ public class SpringMain {
             Meal meal = mealRestController.get(4);
             System.out.println("\t" + meal);
 
-            /*System.out.println("\nget all meals belonging to user 1:");
+            System.out.println("\nget all meals belonging to user 1:");
             System.out.println("\t" + mealRestController.getAll());
 
             System.out.println("\nupdate and get meal 4 belonging to user 1:");
@@ -78,7 +78,16 @@ public class SpringMain {
 
             System.out.println("\nget all meals for user 3 with no meal");
             MealService mealService = appCtx.getBean(MealService.class);
-            System.out.println("\t" + mealService.getAll(3));*/
+            System.out.println("\t" + mealService.getAll(3));
+
+            /*System.out.println("\ntry to delete meal by user with no meal");
+            mealService.delete(666, 3); // NFE*/
+
+            /*System.out.println("\ntry to update meal for user with no meal");
+            mealService.update(new Meal(8, meal.getDateTime(), "Апдейт еды другого пользователя", meal.getCalories()), 8); // NFE*/
+
+            /*System.out.println("\ntry to get meal for user with no meal");
+            mealService.get(1, 3); // NFE*/
 
             /*System.out.println("\ntry to update meal 8 not belonging to user 1:");
             mealRestController.update(new Meal(8, meal.getDateTime(), "Апдейт еды другого пользователя", meal.getCalories()), 8); // NFE

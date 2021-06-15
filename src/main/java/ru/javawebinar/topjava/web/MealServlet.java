@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.util.StringUtils;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.web.meal.MealRestController;
 
@@ -38,22 +39,17 @@ public class MealServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         request.setCharacterEncoding("UTF-8");
-
         String id = request.getParameter("id");
-
         Meal meal = new Meal(id.isEmpty() ? null : Integer.valueOf(id),
                 LocalDateTime.parse(request.getParameter("dateTime")),
                 request.getParameter("description"),
                 Integer.parseInt(request.getParameter("calories")));
-
         log.info(meal.isNew() ? "Create {}" : "Update {}", meal);
-
         if (meal.isNew()) {
             controller.create(meal);
         } else {
             controller.update(meal, meal.getId());
         }
-
         response.sendRedirect("meals");
     }
 
@@ -82,10 +78,10 @@ public class MealServlet extends HttpServlet {
                 String endTime = request.getParameter("endTime");
                 log.info("getAllFiltered: startDate=[{}], startTime=[{}], endDate=[{}], endTime=[{}]", startDate, startTime, endDate, endTime);
                 request.setAttribute("meals", controller.getAllFiltered(
-                        startDate == null || startDate.isEmpty() ? null : LocalDate.parse(startDate),
-                        startTime == null || startTime.isEmpty() ? null : LocalTime.parse(startTime),
-                        endDate == null || endDate.isEmpty() ? null : LocalDate.parse(endDate),
-                        endTime == null || endTime.isEmpty() ? null : LocalTime.parse(endTime)
+                        StringUtils.hasLength(startDate) ? LocalDate.parse(startDate) : null,
+                        StringUtils.hasLength(startTime) ? LocalTime.parse(startTime) : null,
+                        StringUtils.hasLength(endDate) ? LocalDate.parse(endDate) : null,
+                        StringUtils.hasLength(endTime) ? LocalTime.parse(endTime) : null
                 ));
                 request.getRequestDispatcher("/meals.jsp").forward(request, response);
                 break;
