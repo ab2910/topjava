@@ -2,13 +2,48 @@
 <head>
     <meta charset="UTF-8">
     <title>Java Enterprise (Topjava)</title>
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        html {
+            display: table;
+            margin: auto;
+        }
+
+        body {
+            display: table-cell;
+            vertical-align: top;
+            padding-top: 50px;
+            background-color: darkgray;
+            font-family: Monospaced, monospace;
+        }
+
+        p {
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+
 </head>
 <body>
-<h3>Проект <a href="https://github.com/JavaWebinar/topjava" target="_blank">Java Enterprise (Topjava)</a></h3>
-<hr>
-<ul style="font-size: large">
-    <li><a href="users">Users</a></li>
-    <li><a href="meals">Meals</a></li>
-</ul>
+    <h3>Проект <a href="https://github.com/JavaWebinar/topjava" target="_blank">Java Enterprise (Topjava)</a></h3>
+    <hr>
+    <form method="post" action="users">
+        <input type="hidden" name="action" value="login">
+        <p><label for="id">Choose A User To Log In:</label>
+            <select id="id" name="id" onchange="this.form.submit()">
+                <option selected="selected">Choose...</option>
+                <option value="1">User #1</option>
+                <option value="2">User #2</option>
+            </select>
+        </p>
+    </form>
+
+    <ul style="font-size: large">
+        <li><a href="users">Users</a></li>
+        <li><a href="meals">Meals</a></li>
+    </ul>
 </body>
 </html>

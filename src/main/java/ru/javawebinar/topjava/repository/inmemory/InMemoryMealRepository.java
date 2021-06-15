@@ -13,14 +13,16 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Repository
 public class InMemoryMealRepository implements MealRepository {
-    private final Map<Integer, Meal> repository = new ConcurrentHashMap<>();
-    private final Map<Integer, Set<Integer>> userToMeal = new ConcurrentHashMap<>();
+    private static final Logger log = LoggerFactory.getLogger(InMemoryMealRepository.class);
+
+    private final Map<Integer, Map<Integer, Meal>> repository = new ConcurrentHashMap<>();
     private final AtomicInteger counter = new AtomicInteger(0);
-    private static final Logger log = LoggerFactory.getLogger(InMemoryUserRepository.class);
 
     {
         MealsUtil.meals.forEach(meal -> save(meal, 1));
@@ -31,54 +33,56 @@ public class InMemoryMealRepository implements MealRepository {
     @Override
     public Meal save(Meal meal, int userId) {
         log.info("save {} for userId={}", meal, userId);
+
         if (meal.isNew()) {
             meal.setId(counter.incrementAndGet());
-            repository.put(meal.getId(), meal);
-            userToMeal.merge(userId, new HashSet<>(Collections.singleton(meal.getId())), (oldSet, newSet) -> {
-                oldSet.add(meal.getId());
-                return oldSet;
+            repository.merge(
+                    userId,
+                    new ConcurrentHashMap<Integer, Meal>() {{ put(meal.getId(), meal); }},
+                    (oldMap, newMap) -> {
+                        oldMap.put(meal.getId(), meal);
+                        return oldMap;
             });
             return meal;
         }
+
         if (isMealNotOfUser(meal.getId(), userId)) return null;
-        return repository.computeIfPresent(meal.getId(), (id, oldMeal) -> meal);
+        return repository.get(userId).computeIfPresent(meal.getId(), (id, oldMeal) -> meal);
     }
 
     @Override
     public boolean delete(int id, int userId) {
-        log.info("delete {} for userId={}", id, userId);
+        log.info("delete Meal#{} for userId={}", id, userId);
         if (isMealNotOfUser(id, userId)) return false;
-        userToMeal.get(userId).remove(id);
-        return repository.remove(id) != null;
+        return repository.get(userId).remove(id) != null;
     }
 
     @Override
     public Meal get(int id, int userId) {
-        log.info("get {} for userId={}", id, userId);
+        log.info("get Meal#{} for userId={}", id, userId);
         if (isMealNotOfUser(id, userId)) return null;
-        return repository.get(id);
+        return repository.get(userId).get(id);
     }
 
     @Override
     public List<Meal> getAll(int userId) {
         log.info("getAll for userId={}", userId);
-        return userToMeal.get(userId).stream()
-                .map(repository::get)
-                .sorted(Comparator
-                        .comparing(Meal::getDateTime)
-                        .reversed())
-                .collect(Collectors.toList());
+        return getStream(userId, meal -> true).collect(Collectors.toList());
     }
 
     @Override
-    public List<Meal> getAll(LocalDate startDate, LocalDate endDate, int userId) {
-        log.info("getAll filtered for userId={}", userId);
-        return getAll(userId).stream()
-                .filter(meal -> DateTimeUtil.isBetweenDates(meal.getDate(), startDate, endDate))
-                .collect(Collectors.toList());
+    public List<Meal> getAllFiltered(LocalDate startDate, LocalDate endDate, int userId) {
+        log.info("getAll filtered by dates={}, {} for userId={}", startDate, endDate, userId);
+        return getStream(userId, meal -> DateTimeUtil.isBetweenDates(meal.getDate(), startDate, endDate)).collect(Collectors.toList());
     }
 
     private boolean isMealNotOfUser(int id, int userId) {
-        return !userToMeal.getOrDefault(userId, new HashSet<>(0)).contains(id);
+        return repository.getOrDefault(userId, new ConcurrentHashMap<>()).get(id) == null;
+    }
+
+    private Stream<Meal> getStream(int userId, Predicate<Meal> filter) {
+        return repository.get(userId).values().stream()
+                .filter(filter)
+                .sorted(Comparator.comparing(Meal::getDateTime).reversed());
     }
 }

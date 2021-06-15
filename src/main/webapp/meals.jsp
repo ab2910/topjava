@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://topjava.javawebinar.ru/functions" %>
@@ -124,7 +124,7 @@
     </table>
     <br>
     <a id="filterLink" href="#" onclick="toggle_filter()">Apply Date/Time Filters</a>
-    <form id="filter" method="post" action="meals">
+    <form id="filter" method="get" action="meals">
         <input type="hidden" name="action" value="filter">
         <table>
             <tr>

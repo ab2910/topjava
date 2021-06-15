@@ -3,12 +3,7 @@ package ru.javawebinar.topjava;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.javawebinar.topjava.model.Meal;
-import ru.javawebinar.topjava.model.Role;
-import ru.javawebinar.topjava.model.User;
-import ru.javawebinar.topjava.repository.inmemory.InMemoryUserRepository;
-import ru.javawebinar.topjava.util.UsersUtil;
 import ru.javawebinar.topjava.web.meal.MealRestController;
-import ru.javawebinar.topjava.web.user.AdminRestController;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -51,24 +46,24 @@ public class SpringMain {
             System.out.println("\t" + mealRestController.getAll());
 
             System.out.println("\nget all meals between null dates and times belonging to user 1");
-            System.out.println("\t" + mealRestController.getAll(null, null, null, null));
+            System.out.println("\t" + mealRestController.getAllFiltered(null, null, null, null));
 
             System.out.println("\nget all meals between dates belonging to user 1");
-            System.out.println("\t" + mealRestController.getAll(
+            System.out.println("\t" + mealRestController.getAllFiltered(
                     LocalDate.of(2020, Month.JANUARY, 31),
                     null,
                     LocalDate.of(2020, Month.JANUARY, 31),
                     null));
 
             System.out.println("\nget all meals between times belonging to user 1");
-            System.out.println("\t" + mealRestController.getAll(
+            System.out.println("\t" + mealRestController.getAllFiltered(
                     null,
                     LocalTime.of(7, 0),
                     null,
                     LocalTime.of(12, 0)));
 
             System.out.println("\nget all meals half interval belonging to user 1");
-            System.out.println("\t" + mealRestController.getAll(
+            System.out.println("\t" + mealRestController.getAllFiltered(
                     LocalDate.of(2020, Month.JANUARY, 31),
                     null,
                     null,
@@ -89,13 +84,24 @@ public class SpringMain {
             /*System.out.println("\ntry to delete meal 8 not belonging to user 1:");
             mealRestController.delete(8);*/ // NPE
 
+            /*List<User> users = Arrays.asList(
+                    new User("user", "e@ma.il", "password", Role.USER),
+                    new User("User", "e1@ma.il", "password", Role.USER),
+                    new User("an user", "e2@ma.il", "password", Role.USER),
+                    new User("user an", "e3@ma.il", "password", Role.USER),
+                    new User("super user", "e4@ma.il", "password", Role.USER),
+                    new User("God", "e5@ma.il", "password", Role.USER, Role.ADMIN),
+                    new User("user1", "e6@ma.il", "password", Role.USER),
+                    new User("user2", "e7@ma.il", "password", Role.USER),
+                    new User("user2", "e9@ma.il", "password", Role.USER),
+                    new User("user2", "e8@ma.il", "password", Role.USER)
+            );
 
+            UserRepository userRepository = appCtx.getBean(InMemoryUserRepository.class);
+            users.forEach(userRepository::save);
 
-            /*AdminRestController adminUserController = appCtx.getBean(AdminRestController.class);
+            AdminRestController adminUserController = appCtx.getBean(AdminRestController.class);
             adminUserController.create(new User(null, "userName", "email@mail.ru", "password", Role.ADMIN));
-
-            InMemoryUserRepository inMemoryUserRepository = appCtx.getBean(InMemoryUserRepository.class);
-            UsersUtil.users.forEach(inMemoryUserRepository::save);
 
             System.out.println("\nget all users sorted by name, then email");
             adminUserController.getAll().forEach(user -> System.out.println("\t"+user));*/
