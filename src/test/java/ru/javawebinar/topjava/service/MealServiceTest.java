@@ -81,6 +81,7 @@ public class MealServiceTest {
     public void getAllEmpty() {
         List<Meal> expected = Collections.emptyList();
         service.delete(adminMeal1.getId(), ADMIN_ID);
+        service.delete(adminMeal2.getId(), ADMIN_ID);
         List<Meal> actual = service.getAll(ADMIN_ID);
         MealTestData.assertMatch(actual, expected);
     }
