@@ -13,6 +13,9 @@ import ru.javawebinar.topjava.MealTestData;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.util.exception.NotFoundException;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertThrows;
@@ -20,6 +23,7 @@ import static ru.javawebinar.topjava.UserTestData.*;
 import static ru.javawebinar.topjava.MealTestData.*;
 
 @ContextConfiguration({
+        "classpath:spring/spring-app-jdbc.xml",
         "classpath:spring/spring-app.xml",
         "classpath:spring/spring-db.xml"
 })
@@ -34,21 +38,14 @@ public class MealServiceTest {
         SLF4JBridgeHandler.install();
     }
 
-    /*
-        user meal ids = 100002 — 100008;
-        admin meal ids = 100009, 100010;
-        not found id = 327
-     */
-
     @Test
     public void get() {
-        Meal meal = service.get(ADMIN_MEAL.getId(), ADMIN_ID);
-        assertMatch(meal, ADMIN_MEAL);
+        assertMatch(service.get(adminMeal1.getId(), ADMIN_ID), adminMeal1);
     }
 
     @Test
     public void getForAnotherUser() {
-        assertThrows(NotFoundException.class, () -> service.get(ADMIN_MEAL.getId(), USER_ID));
+        assertThrows(NotFoundException.class, () -> service.get(adminMeal1.getId(), USER_ID));
     }
 
     @Test
@@ -58,13 +55,13 @@ public class MealServiceTest {
 
     @Test
     public void delete() {
-        service.delete(ADMIN_MEAL.getId(), ADMIN_ID);
-        assertThrows(NotFoundException.class, () -> service.get(ADMIN_MEAL.getId(), ADMIN_ID));
+        service.delete(adminMeal1.getId(), ADMIN_ID);
+        assertThrows(NotFoundException.class, () -> service.get(adminMeal1.getId(), ADMIN_ID));
     }
 
     @Test
     public void deleteForAnotherUser() {
-        assertThrows(NotFoundException.class, () -> service.delete(ADMIN_MEAL.getId(), USER_ID));
+        assertThrows(NotFoundException.class, () -> service.delete(adminMeal1.getId(), USER_ID));
     }
 
     @Test
@@ -73,77 +70,122 @@ public class MealServiceTest {
     }
 
     @Test
-    public void getBetweenInclusive() {
-        List<Meal> meals = service.getBetweenInclusive(FILTER_DATE, FILTER_DATE, USER_ID);
-        MealTestData.assertMatch(meals, USER_MEALS_SORTED_FILTERED);
+    public void getAll() {
+        List<Meal> expected = Arrays.asList(userMeal7Day2, userMeal6Day2, userMeal5Day2, userMeal4Day2,
+                userMeal3Day1, userMeal2Day1, userMeal1Day1);
+        List<Meal> actual = service.getAll(USER_ID);
+        MealTestData.assertMatch(actual, expected);
     }
 
     @Test
-    public void getAll() {
-        List<Meal> meals = service.getAll(USER_ID);
-        MealTestData.assertMatch(meals, USER_MEALS_SORTED);
+    public void getAllEmpty() {
+        List<Meal> expected = Collections.emptyList();
+        service.delete(adminMeal1.getId(), ADMIN_ID);
+        List<Meal> actual = service.getAll(ADMIN_ID);
+        MealTestData.assertMatch(actual, expected);
+    }
+
+    @Test
+    public void getBetweenInclusive() {
+        List<Meal> expected = Arrays.asList(userMeal3Day1, userMeal2Day1, userMeal1Day1);
+        List<Meal> actual = service.getBetweenInclusive(DAY1, DAY1, USER_ID);
+        MealTestData.assertMatch(actual, expected);
+    }
+
+    @Test
+    public void getBetweenInclusiveEmpty() {
+        List<Meal> expected = Collections.emptyList();
+        List<Meal> actual = service.getBetweenInclusive(DAY1, DAY1, ADMIN_ID);
+        MealTestData.assertMatch(actual, expected);
+    }
+
+    @Test
+    public void getBetweenInclusiveHalfInterval1() {
+        List<Meal> expected = Arrays.asList(userMeal3Day1, userMeal2Day1, userMeal1Day1);
+        List<Meal> actual = service.getBetweenInclusive(null, DAY1, USER_ID);
+        MealTestData.assertMatch(actual, expected);
+    }
+
+    @Test
+    public void getBetweenInclusiveHalfInterval2() {
+        List<Meal> expected = Arrays.asList(userMeal7Day2, userMeal6Day2, userMeal5Day2, userMeal4Day2);
+        List<Meal> actual = service.getBetweenInclusive(DAY2, null, USER_ID);
+        MealTestData.assertMatch(actual, expected);
+    }
+
+    @Test
+    public void getBetweenInclusiveNoInterval() {
+        List<Meal> expected = Arrays.asList(userMeal7Day2, userMeal6Day2, userMeal5Day2, userMeal4Day2,
+                userMeal3Day1, userMeal2Day1, userMeal1Day1);
+        List<Meal> actual = service.getBetweenInclusive(null, null, USER_ID);
+        MealTestData.assertMatch(actual, expected);
     }
 
     @Test
     public void update() {
-        Meal updated = MealTestData.getUpdated();
-        service.update(updated, ADMIN_ID);
-        assertMatch(service.get(updated.getId(), ADMIN_ID), MealTestData.getUpdated());
+        Meal toUpdate = MealTestData.getUpdated(adminMeal1);
+        service.update(toUpdate, ADMIN_ID);
+        assertMatch(service.get(toUpdate.getId(), ADMIN_ID), MealTestData.getUpdated(adminMeal1));
     }
 
     @Test
     public void updateForAnotherUser() {
-        Meal updated = MealTestData.getUpdated();
-        assertThrows(NotFoundException.class, () -> service.update(updated, USER_ID));
+        assertThrows(NotFoundException.class, () -> service.update(MealTestData.getUpdated(adminMeal1), USER_ID));
     }
 
     @Test
     public void updateNotExisting() {
-        Meal updated = MealTestData.getUpdated();
-        updated.setId(MEAL_NOT_FOUND_ID);
-        assertThrows(NotFoundException.class, () -> service.update(updated, ADMIN_ID));
+        Meal toUpdate = MealTestData.getUpdated(adminMeal1);
+        toUpdate.setId(MEAL_NOT_FOUND_ID);
+        assertThrows(NotFoundException.class, () -> service.update(toUpdate, ADMIN_ID));
     }
 
     @Test
-    public void updateWithDuplicatingDateTime() {
-        Meal updated = MealTestData.getUpdated();
-        updated.setDateTime(service.get(updated.getId()+1, ADMIN_ID).getDateTime());
-        assertThrows(DataAccessException.class, () -> service.update(updated, ADMIN_ID));
+    public void updateWithDuplicatingDateTimeOfThisUser() {
+        Meal toUpdate = MealTestData.getUpdated(adminMeal1);
+        toUpdate.setDateTime(service.get(adminMeal2.getId(), ADMIN_ID).getDateTime());
+        assertThrows(DataAccessException.class, () -> service.update(toUpdate, ADMIN_ID));
     }
 
     @Test
     public void updateWithDuplicatingDateTimeOfAnotherUser() {
-        Meal updated = MealTestData.getUpdated();
-        updated.setDateTime(service.get(updated.getId()-1, USER_ID).getDateTime());
-        service.update(updated, ADMIN_ID);
-        assertMatch(service.get(updated.getId(), ADMIN_ID), updated);
+        Meal toUpdate = MealTestData.getUpdated(adminMeal1);
+        LocalDateTime newDateTime = service.get(userMeal1Day1.getId(), USER_ID).getDateTime();
+        toUpdate.setDateTime(newDateTime);
+        service.update(toUpdate, ADMIN_ID);
+        Meal expected = MealTestData.getUpdated(adminMeal1);
+        expected.setDateTime(newDateTime);
+        assertMatch(service.get(toUpdate.getId(), ADMIN_ID), expected);
     }
 
     @Test
     public void create() {
         Meal created = service.create(MealTestData.getNew(), ADMIN_ID);
         Integer newId = created.getId();
-        Meal newMeal = MealTestData.getNew();
-        newMeal.setId(newId);
-        assertMatch(created, newMeal);
-        assertMatch(service.get(newId, ADMIN_ID), newMeal);
+        Meal expected = MealTestData.getNew();
+        expected.setId(newId);
+        assertMatch(created, expected);
+        assertMatch(service.get(newId, ADMIN_ID), expected);
     }
 
     @Test
-    public void createWithDuplicatingDateTime() {
-        Meal newMeal = MealTestData.getNew();
-        newMeal.setDateTime(service.get(MEAL_START_ID + 8, ADMIN_ID).getDateTime());
-        assertThrows(DataAccessException.class, () -> service.create(newMeal, ADMIN_ID));
+    public void createWithDuplicatingDateTimeOfThisUser() {
+        Meal toCreate = MealTestData.getNew();
+        toCreate.setDateTime(service.get(adminMeal1.getId(), ADMIN_ID).getDateTime());
+        assertThrows(DataAccessException.class, () -> service.create(toCreate, ADMIN_ID));
     }
 
     @Test
     public void createWithDuplicatingDateTimeOfAnotherUser() {
-        Meal newMeal = MealTestData.getNew();
-        newMeal.setDateTime(service.get(MEAL_START_ID + 4, USER_ID).getDateTime());
-        Meal created = service.create(newMeal, ADMIN_ID);
+        Meal toCreate = MealTestData.getNew();
+        LocalDateTime newDateTime = service.get(userMeal1Day1.getId(), USER_ID).getDateTime();
+        toCreate.setDateTime(newDateTime);
+        Meal created = service.create(toCreate, ADMIN_ID);
         Integer newId = created.getId();
-        newMeal.setId(newId);
-        assertMatch(created, newMeal);
-        assertMatch(service.get(newId, ADMIN_ID), newMeal);
+        Meal expected = MealTestData.getNew();
+        expected.setId(newId);
+        expected.setDateTime(newDateTime);
+        assertMatch(created, expected);
+        assertMatch(service.get(newId, ADMIN_ID), expected);
     }
 }
